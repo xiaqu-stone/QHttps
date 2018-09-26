@@ -1,0 +1,95 @@
+apply plugin: 'com.android.library'
+
+apply plugin: 'kotlin-android-extensions'
+
+android {
+    compileSdkVersion conf.compileSdkVersion
+
+    defaultConfig {
+        minSdkVersion conf.minSdkVersion
+        targetSdkVersion conf.targetSdkVersion
+        versionCode 1
+        versionName "1.0"
+
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    flavorDimensions 'type'
+
+    productFlavors {
+
+    }
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+
+    testImplementation 'junit:junit:4.12'
+    androidTestImplementation 'com.android.support.test:runner:1.0.2'
+    androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
+
+    implementation "com.squareup.okhttp3:okhttp:$okhttp"
+//    implementation "com.squareup.okhttp3:logging-interceptor:$okhttp"
+    implementation("com.sqq.xiaqu:okhttp3-logging:$okhttpLogging") {
+        exclude group: 'com.sqq.xiaqu', module: 'logs'
+    }
+
+    implementation "com.sqq.xiaqu:logs:$logs"
+
+//    implementation "com.google.code.gson:gson:$gson"
+
+    implementation "com.squareup.retrofit2:retrofit:$retrofit"
+    implementation "com.squareup.retrofit2:adapter-rxjava2:$retrofit"
+    implementation ("com.sqq.xiaqu:retrofit2-gson-convert:$retrofitGsonConvert"){
+        exclude group: 'com.google.code.gson'
+    }
+//    implementation project(':retrofit2-gson-convert')
+//    implementation "com.squareup.retrofit2:converter-gson:$retrofit"
+
+    implementation "io.reactivex.rxjava2:rxjava:$rxJava"
+    implementation "io.reactivex.rxjava2:rxandroid:$rxAndroid"
+}
+
+ext {
+    //Bintray中的仓库名，可以建立多个，为当前包指定一个要上传的仓库即可
+    bintrayRepo = 'maven'
+    //在Bintray库的展示名字
+    bintrayName = 'q-https'
+
+    //顾名思义，都接触过
+    publishedGroupId = 'com.sqq.xiaqu'
+    //这个两个参数也很容易理解，不过需要说明的就是，这个两个参数以及当前module在AS中的name，三者要保持一致
+    libraryName = 'q-https'
+    artifact = 'q-https'
+    //版本号，当组件升级发布时，请升级版本号
+    libraryVersion = '1.0.0'
+
+    //下述参数，你懂的...
+
+    libraryDescription = '网络工具库Rx2 + Retrofit2 + OkHttp3'
+
+    siteUrl = 'https://github.com/xiaqu-stone/QHttps'
+    gitUrl = 'https://github.com/xiaqu-stone/QHttps.git'
+
+    developerId = 'stone'
+    developerName = 'xiaqu-stone'
+    developerEmail = 'stone.xiaqu@gmail.com'
+
+    licenseName = 'The Apache Software License, Version 2.0'
+    licenseUrl = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+    allLicenses = ["Apache-2.0"]
+
+}
+
+apply from: "../install.gradle"
+apply from: "../bintray.gradle"
+
+apply plugin: 'kotlin-android'
