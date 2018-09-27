@@ -1,6 +1,5 @@
 package com.stone.qhttps
 
-import com.stone.okhttp3.logging.HttpLoggingInterceptor
 import com.stone.qhttps.download.DownloadProgressInterceptor
 import com.stone.qhttps.download.DownloadProgressListener
 import okhttp3.Cache
@@ -46,7 +45,6 @@ object OkHttpClientHelper {
                     }
                     response
                 }
-                .addInterceptor(HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.BODY))
         if (cacheDir != null) {
             okHttpBuilder.cache(Cache(cacheDir, HTTP_RESPONSE_DISK_CACHE_MAX_SIZE))
         }
@@ -72,7 +70,6 @@ object OkHttpClientHelper {
                             .addHeader("Cache-Control", String.format(Locale.CHINA, "max-age=%d, no-cache, max-stale=%d", 0, 0))
                     it.proceed(builder.build())
                 }
-                .addInterceptor(HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.HEADERS))
                 .build()
     }
 
@@ -82,7 +79,6 @@ object OkHttpClientHelper {
     @JvmOverloads
     fun createUpload(timeout: Long = TIME_OUT_NORMAL, headersBuilder: ((Request.Builder) -> Request.Builder)? = null): OkHttpClient {
         return createDefaultBuilder(timeout)
-                .addInterceptor(HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.HEADERS))
                 .addInterceptor {
                     if (headersBuilder == null) it.proceed(it.request()) else it.proceed(headersBuilder(it.request().newBuilder()).build())
                 }
