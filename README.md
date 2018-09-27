@@ -4,11 +4,11 @@
 ### gradle
 
 ```
-    implementation "com.sqq.xiaqu:q-https:1.0.0"
+    debugImplementation "com.sqq.xiaqu:q-https:1.0.0"
+    releaseImplementation "com.sqq.xiaqu:q-https-no-log:1.0.0"
     
     //内部依赖，建议在主工程中添加
     implementation "com.squareup.okhttp3:okhttp:$okhttp"
-    implementation "com.sqq.xiaqu:okhttp3-logging:$okhttpLogging"
 
     implementation "com.squareup.retrofit2:retrofit:$retrofit"
     implementation "com.squareup.retrofit2:adapter-rxjava2:$retrofit"
