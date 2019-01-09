@@ -24,9 +24,11 @@ object QClient {
 
     private var headers: Map<String, String>? = null
     private var params: Map<String, String>? = null
+    private var body: RequestBody? = null
 
     private var partMap: Map<String, RequestBody>? = null
-    private var file: Array<out MultipartBody.Part>? = null
+    private var file: Array<MultipartBody.Part>? = null
+    private var fileList: List<MultipartBody.Part>? = null
 
     /**
      * 下载url
@@ -55,33 +57,38 @@ object QClient {
         return this
     }
 
+    fun body(body: RequestBody): QClient {
+        this.body = body
+        return this
+    }
+
     fun partMap(partMap: Map<String, RequestBody>): QClient {
         this.partMap = partMap
         return this
     }
 
-    fun filePart(file: Array<out MultipartBody.Part>): QClient {
+    fun filePart(file: Array<MultipartBody.Part>): QClient {
         this.file = file
         return this
     }
 
     private fun create(): QService {
         return Retrofit.Builder().baseUrl("https://www.google.com/")
-                .client(this.client ?: OkHttpClientHelper.create())
-                .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
+            .client(this.client ?: OkHttpClientHelper.create())
+            .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
 //                .addConverterFactory(StringConverterFactory)
-                .addConverterFactory(GsonConverterFactory.create())
-                .build().create(QService::class.java)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build().create(QService::class.java)
     }
 
     fun get(observer: Observer<Result<String>>) {
         create().get(url, headers, params ?: mapOf()).httpScheduler()
-                .subscribe(observer)
+            .subscribe(observer)
     }
 
     fun post(observer: Observer<Result<String>>) {
         create().post(url, headers, params ?: mapOf()).httpScheduler()
-                .subscribe(observer)
+            .subscribe(observer)
     }
 
     fun upload(observer: Observer<Result<String>>) {
@@ -89,8 +96,23 @@ object QClient {
             throw Throwable("QHttps: the filePart can't be nullOrEmpty when request upload")
         }
         client(OkHttpClientHelper.createUpload())
-        create().upload(url, headers, partMap, *file!!).httpScheduler()
-                .subscribe(observer)
+        create().upload(url, headers, *file!!).httpScheduler()
+            .subscribe(observer)
+    }
+
+    fun uploadMap(observer: Observer<Result<String>>) {
+        if (partMap == null || partMap!!.isEmpty()) {
+            throw Throwable("QHttps: the partMap can't be nullOrEmpty when request upload")
+        }
+        client(OkHttpClientHelper.createUpload())
+        create().upload(url, headers, partMap!!).httpScheduler()
+            .subscribe(observer)
+    }
+
+    fun uploadBody(observer: Observer<Result<String>>) {
+        client(OkHttpClientHelper.createUpload())
+        create().upload(url, headers, body!!).httpScheduler()
+            .subscribe(observer)
     }
 }
 
@@ -108,15 +130,44 @@ interface QService {
     fun post(@Url url: String, @HeaderMap headers: Map<String, String>? = null, @FieldMap(encoded = true) params: Map<String, String>): Observable<Result<String>>
 
     /**
-     * @param partMap : 用以多参数传值
-     * @param file : 用以多文件上传
+     * Part
      *
-     * example:
-     *
+     * val parts = new MultipartBody.Builder().addFormDataPart...
+     *  .build().parts().toTypeArray
      */
     @Multipart
     @POST
-    fun upload(@Url url: String, @HeaderMap headers: Map<String, String>? = null, @PartMap partMap: Map<String, RequestBody>? = null, @Part vararg file: MultipartBody.Part): Observable<Result<String>>
+    fun upload(@Url url: String, @HeaderMap headers: Map<String, String>? = null, @Part vararg file: MultipartBody.Part): Observable<Result<String>>
+
+    /**
+     * 多个参数时可以采用此方法
+     *
+     * 注意：当在这里上传文件时，注意 key 的写法
+     *
+     * val map = mapOf("file\"; filename=\"${fileImg.name}" to requestBody, "type" to RequestBodyUtil.str2Body(type))
+     *
+     * 在组装Map时，对于file需要在后端约定的正常 key值 “file” 的基础上 加上 filename 注意上述写法，其中包含 双引号的转义
+     */
+    @Multipart
+    @POST
+    fun upload(@Url url: String, @HeaderMap headers: Map<String, String>? = null, @PartMap partMap: Map<String, @JvmSuppressWildcards RequestBody>): Observable<Result<String>>
+
+    /**
+     * 通用的方式
+     *
+     * 外面全部利用 MultipartBody 来组装成一个 RequestBody
+     *
+     * example:
+     *
+    RequestBody body=new MultipartBody.Builder()
+    .addFormDataPart("name","stone")
+    .addFormDataPart("token","1234567890")
+    .addFormDataPart("file",file.getName(),file)
+    .build();
+     */
+    @POST
+    fun upload(@Url url: String, @HeaderMap headers: Map<String, String>? = null, @Body body: RequestBody): Observable<Result<String>>
+
 }
 
 

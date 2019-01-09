@@ -98,6 +98,7 @@ open class QObserver<T>(private val onSuccess: ((result: T) -> Unit)? = null) : 
             onSuccess(t)
         } catch (e: Exception) {
             Logs.e("Error onSuccess, msg = ${e.message}")
+            onError(e, t)
         }
     }
 

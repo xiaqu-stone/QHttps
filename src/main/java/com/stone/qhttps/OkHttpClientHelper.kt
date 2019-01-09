@@ -29,24 +29,31 @@ object OkHttpClientHelper {
      * 基本请求（get/post）使用的OkHttpClient,满足大多数的使用场景
      */
     @JvmOverloads
-    fun create(timeout: Long = TIME_OUT_NORMAL, cacheDir: File? = null, headersBuilder: ((Request.Builder) -> Request.Builder)? = null): OkHttpClient {
+    fun create(
+        timeout: Long = TIME_OUT_NORMAL,
+        cacheDir: File? = null,
+        headersBuilder: ((Request.Builder) -> Request.Builder)? = null
+    ): OkHttpClient {
         val okHttpBuilder = createDefaultBuilder(timeout)
-                .retryOnConnectionFailure(false)
-                .addInterceptor {
-                    if (headersBuilder == null) it.proceed(it.request()) else it.proceed(headersBuilder(it.request().newBuilder()).build())
+            .retryOnConnectionFailure(false)
+            .addInterceptor {
+                if (headersBuilder == null) it.proceed(it.request()) else it.proceed(headersBuilder(it.request().newBuilder()).build())
+            }
+            .addInterceptor { it ->
+                val builder = it.request().newBuilder()
+                    .addHeader("Content-Type", CONTENT_TYPE)
+                    .addHeader("User-Agent", USER_AGENT)
+                    .addHeader(
+                        "Cache-Control",
+                        String.format(Locale.CHINA, "max-age=%d, no-cache, max-stale=%d", 10, 0)
+                    )
+                val response = it.proceed(builder.build())
+                if (response.code() == HttpURLConnection.HTTP_OK) {
+                    response.header("Set-Cookie")
                 }
-                .addInterceptor { it ->
-                    val builder = it.request().newBuilder()
-                            .addHeader("Content-Type", CONTENT_TYPE)
-                            .addHeader("User-Agent", USER_AGENT)
-                            .addHeader("Cache-Control", String.format(Locale.CHINA, "max-age=%d, no-cache, max-stale=%d", 10, 0))
-                    val response = it.proceed(builder.build())
-                    if (response.code() == HttpURLConnection.HTTP_OK) {
-                        response.header("Set-Cookie")
-                    }
-                    response
-                }
-                .addInterceptor(HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.BODY))
+                response
+            }
+            .addInterceptor(HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.BODY))
         if (cacheDir != null) {
             okHttpBuilder.cache(Cache(cacheDir, HTTP_RESPONSE_DISK_CACHE_MAX_SIZE))
         }
@@ -57,36 +64,43 @@ object OkHttpClientHelper {
      * 下载
      */
     @JvmOverloads
-    fun createDownload(headersBuilder: ((Request.Builder) -> Request.Builder)? = null, timeout: Long = TIME_OUT_NORMAL, listener: ((bytesRead: Long, contentLength: Long, done: Boolean) -> Unit)? = null): OkHttpClient {
+    fun createDownload(
+        headersBuilder: ((Request.Builder) -> Request.Builder)? = null,
+        timeout: Long = TIME_OUT_NORMAL,
+        listener: ((bytesRead: Long, contentLength: Long, done: Boolean) -> Unit)? = null
+    ): OkHttpClient {
         return createDefaultBuilder(timeout)
-                .addInterceptor(DownloadProgressInterceptor(object : DownloadProgressListener {
-                    override fun update(bytesRead: Long, contentLength: Long, done: Boolean) {
-                        listener?.invoke(bytesRead, contentLength, done)
-                    }
-                }))
-                .addInterceptor {
-                    if (headersBuilder == null) it.proceed(it.request()) else it.proceed(headersBuilder(it.request().newBuilder()).build())
+            .addInterceptor(DownloadProgressInterceptor(object : DownloadProgressListener {
+                override fun update(bytesRead: Long, contentLength: Long, done: Boolean) {
+                    listener?.invoke(bytesRead, contentLength, done)
                 }
-                .addInterceptor {
-                    val builder = it.request().newBuilder()
-                            .addHeader("Cache-Control", String.format(Locale.CHINA, "max-age=%d, no-cache, max-stale=%d", 0, 0))
-                    it.proceed(builder.build())
-                }
-                .addInterceptor(HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.HEADERS))
-                .build()
+            }))
+            .addInterceptor {
+                if (headersBuilder == null) it.proceed(it.request()) else it.proceed(headersBuilder(it.request().newBuilder()).build())
+            }
+            .addInterceptor {
+                val builder = it.request().newBuilder()
+                    .addHeader("Cache-Control", String.format(Locale.CHINA, "max-age=%d, no-cache, max-stale=%d", 0, 0))
+                it.proceed(builder.build())
+            }
+            .addInterceptor(HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.HEADERS))
+            .build()
     }
 
     /**
      * 上传
      */
     @JvmOverloads
-    fun createUpload(timeout: Long = TIME_OUT_NORMAL, headersBuilder: ((Request.Builder) -> Request.Builder)? = null): OkHttpClient {
+    fun createUpload(
+        timeout: Long = TIME_OUT_NORMAL,
+        headersBuilder: ((Request.Builder) -> Request.Builder)? = null
+    ): OkHttpClient {
         return createDefaultBuilder(timeout)
-                .addInterceptor(HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.HEADERS))
-                .addInterceptor {
-                    if (headersBuilder == null) it.proceed(it.request()) else it.proceed(headersBuilder(it.request().newBuilder()).build())
-                }
-                .build()
+            .addInterceptor(HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.HEADERS))
+            .addInterceptor {
+                if (headersBuilder == null) it.proceed(it.request()) else it.proceed(headersBuilder(it.request().newBuilder()).build())
+            }
+            .build()
     }
 
     /**
@@ -97,18 +111,18 @@ object OkHttpClientHelper {
     @JvmOverloads
     fun createGlide(listener: DownloadProgressListener? = null): OkHttpClient {
         return createDefaultBuilder(TIME_OUT_NORMAL)
-                .addInterceptor(DownloadProgressInterceptor(listener))
-                .build()
+            .addInterceptor(DownloadProgressInterceptor(listener))
+            .build()
     }
 
     fun createDefaultBuilder(timeout: Long = TIME_OUT_NORMAL): OkHttpClient.Builder {
         val ssl = HttpsUtils.getSslSocketFactory()
         return OkHttpClient.Builder()
-                .connectTimeout(timeout, TimeUnit.MILLISECONDS)
-                .readTimeout(timeout, TimeUnit.MILLISECONDS)
-                .writeTimeout(timeout, TimeUnit.MILLISECONDS)
-                .sslSocketFactory(ssl.sSLSocketFactory, ssl.trustManager)
-                .retryOnConnectionFailure(true)
+            .connectTimeout(timeout, TimeUnit.MILLISECONDS)
+            .readTimeout(timeout, TimeUnit.MILLISECONDS)
+            .writeTimeout(timeout, TimeUnit.MILLISECONDS)
+            .sslSocketFactory(ssl.sSLSocketFactory, ssl.trustManager)
+            .retryOnConnectionFailure(true)
 
     }
 
