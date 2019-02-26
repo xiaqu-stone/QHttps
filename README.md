@@ -4,8 +4,8 @@
 ### gradle
 
 ```
-    debugImplementation "com.sqq.xiaqu:q-https:1.0.1"
-    releaseImplementation "com.sqq.xiaqu:q-https-no-log:1.0.1"
+    debugImplementation "com.sqq.xiaqu:q-https:1.0.2"
+    releaseImplementation "com.sqq.xiaqu:q-https-no-log:1.0.2"
     
     //内部依赖，建议在主工程中添加
     implementation "com.squareup.okhttp3:okhttp:$okhttp"

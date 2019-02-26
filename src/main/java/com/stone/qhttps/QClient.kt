@@ -82,12 +82,22 @@ object QClient {
     }
 
     fun get(observer: Observer<Result<String>>) {
-        create().get(url, headers, params ?: mapOf()).httpScheduler()
+        create().get(url, headers ?: mapOf(), params ?: mapOf()).httpScheduler()
+            .subscribe(observer)
+    }
+
+    fun get2(observer: Observer<String>) {
+        create().get2(url, headers ?: mapOf(), params ?: mapOf()).httpScheduler()
             .subscribe(observer)
     }
 
     fun post(observer: Observer<Result<String>>) {
-        create().post(url, headers, params ?: mapOf()).httpScheduler()
+        create().post(url, headers ?: mapOf(), params ?: mapOf()).httpScheduler()
+            .subscribe(observer)
+    }
+
+    fun post2(observer: Observer<String>) {
+        create().post2(url, headers ?: mapOf(), params ?: mapOf()).httpScheduler()
             .subscribe(observer)
     }
 
@@ -96,7 +106,16 @@ object QClient {
             throw Throwable("QHttps: the filePart can't be nullOrEmpty when request upload")
         }
         client(OkHttpClientHelper.createUpload())
-        create().upload(url, headers, *file!!).httpScheduler()
+        create().upload(url, headers ?: mapOf(), *file!!).httpScheduler()
+            .subscribe(observer)
+    }
+
+    fun upload2(observer: Observer<String>) {
+        if (file == null || file!!.isEmpty()) {
+            throw Throwable("QHttps: the filePart can't be nullOrEmpty when request upload")
+        }
+        client(OkHttpClientHelper.createUpload())
+        create().upload2(url, headers ?: mapOf(), *file!!).httpScheduler()
             .subscribe(observer)
     }
 
@@ -109,9 +128,24 @@ object QClient {
             .subscribe(observer)
     }
 
+    fun uploadMap2(observer: Observer<String>) {
+        if (partMap == null || partMap!!.isEmpty()) {
+            throw Throwable("QHttps: the partMap can't be nullOrEmpty when request upload")
+        }
+        client(OkHttpClientHelper.createUpload())
+        create().upload2(url, headers ?: mapOf(), partMap!!).httpScheduler()
+            .subscribe(observer)
+    }
+
     fun uploadBody(observer: Observer<Result<String>>) {
         client(OkHttpClientHelper.createUpload())
-        create().upload(url, headers, body!!).httpScheduler()
+        create().upload(url, headers ?: mapOf(), body!!).httpScheduler()
+            .subscribe(observer)
+    }
+
+    fun uploadBody2(observer: Observer<String>) {
+        client(OkHttpClientHelper.createUpload())
+        create().upload2(url, headers ?: mapOf(), body!!).httpScheduler()
             .subscribe(observer)
     }
 }
@@ -125,9 +159,16 @@ interface QService {
     @GET
     fun get(@Url url: String, @HeaderMap headers: Map<String, String>? = null, @QueryMap(encoded = true) params: Map<String, String>): Observable<Result<String>>
 
+    @GET
+    fun get2(@Url url: String, @HeaderMap headers: Map<String, String>? = null, @QueryMap(encoded = true) params: Map<String, String>): Observable<String>
+
     @FormUrlEncoded
     @POST
     fun post(@Url url: String, @HeaderMap headers: Map<String, String>? = null, @FieldMap(encoded = true) params: Map<String, String>): Observable<Result<String>>
+
+    @FormUrlEncoded
+    @POST
+    fun post2(@Url url: String, @HeaderMap headers: Map<String, String>? = null, @FieldMap(encoded = true) params: Map<String, String>): Observable<String>
 
     /**
      * Part
@@ -138,6 +179,10 @@ interface QService {
     @Multipart
     @POST
     fun upload(@Url url: String, @HeaderMap headers: Map<String, String>? = null, @Part vararg file: MultipartBody.Part): Observable<Result<String>>
+
+    @Multipart
+    @POST
+    fun upload2(@Url url: String, @HeaderMap headers: Map<String, String>? = null, @Part vararg file: MultipartBody.Part): Observable<String>
 
     /**
      * 多个参数时可以采用此方法
@@ -151,6 +196,10 @@ interface QService {
     @Multipart
     @POST
     fun upload(@Url url: String, @HeaderMap headers: Map<String, String>? = null, @PartMap partMap: Map<String, @JvmSuppressWildcards RequestBody>): Observable<Result<String>>
+
+    @Multipart
+    @POST
+    fun upload2(@Url url: String, @HeaderMap headers: Map<String, String>? = null, @PartMap partMap: Map<String, @JvmSuppressWildcards RequestBody>): Observable<String>
 
     /**
      * 通用的方式
@@ -168,6 +217,8 @@ interface QService {
     @POST
     fun upload(@Url url: String, @HeaderMap headers: Map<String, String>? = null, @Body body: RequestBody): Observable<Result<String>>
 
+    @POST
+    fun upload2(@Url url: String, @HeaderMap headers: Map<String, String>? = null, @Body body: RequestBody): Observable<String>
 }
 
 
